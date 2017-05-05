@@ -44,7 +44,8 @@ object SparkTestForAdvance {
     /**
       * 广播共享变量(只读)
       */
-    val signPrefixes = sc.broadcast(Map("gsj" -> 520)) //只读变量
+    val signPrefixes = sc.broadcast(Map("gsj" -> 520))
+    //只读变量
     val data03 = data01.map(v => {
       println("广播变量", signPrefixes.value)
       v
@@ -55,12 +56,13 @@ object SparkTestForAdvance {
       */
     val data04 = sc.parallelize(List((1, 2), (1, 5), (2, 3), (4, 6)))
       .partitionBy(new HashPartitioner(3))
+    printRDD(data04.mapPartitionsWithIndex((a, b) => b.map(a => a._1 * a._2)).persist())
     val data05 = data04.mapPartitionsWithIndex((index, iter) => {
       //只在每个分区上运行一次
       println("mapPartitions", index, iter.length)
       iter.map(pair => pair._1 * pair._2)
     }).persist()
-    data05.count()
+    println(data05.count())
     printRDD(data05)
     println(data05.partitioner, data05.getNumPartitions)
 
