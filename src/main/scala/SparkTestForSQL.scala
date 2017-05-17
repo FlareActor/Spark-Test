@@ -4,9 +4,9 @@
 
 import org.apache.hadoop.io.{IntWritable, Text}
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{Row, SQLContext, SparkSession}
 import SparkTestForRDD.printRDD
-
+import org.apache.spark.SparkConf
 
 case class Person(name: String, age: Int)
 
@@ -17,34 +17,41 @@ object SparkTestForSQL {
   Logger.getLogger("org").setLevel(Level.WARN)
 
   def main(args: Array[String]): Unit = {
+    /**
+      * SQLContext和HiveContext的结合，封装了SparkContext，一个新的编程入口
+      */
     val spark = SparkSession.builder()
       .appName("Spark")
       .config("spark.some.config.option", "some-value")
       .master("local")
-      //      .enableHiveSupport()
+      .enableHiveSupport()
       .getOrCreate()
     import spark.implicits._
     import spark.sql
 
+    /**
+      * 查看数据库元数据
+      */
+    //    spark.catalog.listDatabases().show(false)
+    //    spark.catalog.listTables("wdx").show(false)
+    //    spark.catalog.listColumns("wdx","table1").show(false)
+
     val text = spark.sparkContext.sequenceFile("src/main/resources/SequenceFileExample", classOf[IntWritable], classOf[Text])
       .map { case (key, value) => (key.get(), value.toString) }
-      .toDF()
-    //    text.createOrReplaceTempView("temp")
-    //    text.show()
-    println(text.getClass)
-    text.map(_.mkString).show()
+      .toDF("w", "d")
 
-    //    val caseClassDS = Seq(Person("wdx", 1)).toDS()
-    //    caseClassDS.show()
+    //    text.createOrReplaceTempView("tempView")
 
-    //    val pDS = Seq(1, 2, 3).toDS().as[Int]
-    //    pDS.show()
+    val caseClassDS = Seq(Person("wdx", 1), Person("gsj", 2)).toDS()
+    caseClassDS.show()
 
-    //    sql("CREATE TABLE IF NOT EXISTS src (key INT, value STRING)")
-    //    sql("use wdx")
-    //    sql("show tables").show()
-    //    val sqlDF = sql("select * from table1")
-    //    sqlDF.show()
+    /**
+      * SQL On Hive
+      */
+    sql("use wdx")
+    sql("show tables").show()
+    val sqlDF = sql("select * from table1")
+    sqlDF.show()
   }
 
 }
